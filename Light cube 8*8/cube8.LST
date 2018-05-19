@@ -1,0 +1,135 @@
+C51 COMPILER V9.00   CUBE8                                                                 11/10/2013 09:31:01 PAGE 1   
+
+
+C51 COMPILER V9.00, COMPILATION OF MODULE CUBE8
+OBJECT MODULE PLACED IN cube8.OBJ
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE cube8.c BROWSE DEBUG OBJECTEXTEND
+
+line level    source
+
+   1          #include<reg52.h>
+   2          
+   3          #define uchar unsigned char
+   4          #define uint unsigned int
+   5          uchar xx,yy,zz,layer,icnt,rxcnt;
+   6          uchar display[8][8];
+   7          void delay(uchar z)
+   8          {
+   9   1              uchar x,y;
+  10   1              for(x=z;x>0;x--)
+  11   1                      for(y=100;y>0;y--);
+  12   1      }
+  13          void init()
+  14          {
+  15   1              TMOD=0x21;//定时器1 方式2 用于产生波特率；定时器0 方式1 用于刷新显示
+  16   1              TH1=0XFF;  //
+  17   1              TL1=0XFF;
+  18   1              TH0=0xC0;
+  19   1              TL0=0;
+  20   1              TR1=1;          //开定时器1
+  21   1              TR0=1;
+  22   1      
+  23   1              SCON=0X50;//串口工作于方式1 可接收REN=1
+  24   1              PCON|=0x80;//波特率加倍 
+  25   1      
+  26   1              EA=1;           //开全局中断
+  27   1              ES=1;           //开串口中断
+  28   1              ET0=1;          //开定时器0中断
+  29   1              PS=1;           //配置串口中断优先
+  30   1      }
+  31          /*void single_led(uchar x,uchar y,uchar z,uchar state)
+  32          {
+  33                  uchar t0,t1;
+  34                  t0=0x01<<x;
+  35                  t1=~t0;
+  36                  if(1==state)
+  37                  display[y][z]=display[y][z]|t0;
+  38                  else
+  39                  display[y][z]=display[y][z]&t1;
+  40          }
+  41          void all_led(uchar state)
+  42          {
+  43                  uchar i,j;
+  44                  for(i=0;i<8;i++)
+  45                  {       
+  46                          for(j=0;j<8;j++)
+  47                          {
+  48                                  if(1==state)
+  49                                  display[j][i]=0xff;
+  50                                  if(0==state)
+  51                                  display[j][i]=0x00;
+  52                          }
+  53                  }
+  54          }  */
+  55          void main()
+C51 COMPILER V9.00   CUBE8                                                                 11/10/2013 09:31:01 PAGE 2   
+
+  56          {
+  57   1              uchar i;
+  58   1              rxcnt=0;
+  59   1              init();                         //初始化
+  60   1              while(1)
+  61   1              {               
+  62   2              //      P1=0;
+  63   2                      for (i=0;i<8;i++)
+  64   2                      {
+  65   3                              P2=1<<i;                //锁存端
+  66   3                              delay(10);
+  67   3                              P0=display[layer][i];//位选端
+  68   3                              delay(10);
+  69   3                      }
+  70   2                      
+  71   2                      P1=1<<layer;            //开显示
+  72   2                              //P1=layer;
+  73   2      //      all_led(0);
+  74   2              if (layer<7) 
+  75   2                      layer++;
+  76   2              else 
+  77   2                      layer=0
+  78   2      
+  79   2      
+  80   2              }
+*** ERROR C141 IN LINE 80 OF CUBE8.C: syntax error near '}'
+  81   1      
+  82   1      
+  83   1      }
+  84          void rxd() interrupt 4            //串口中断服务程序
+  85          {                                                                 
+  86   1                      uchar temp=0;                   
+  87   1                      RI=0;
+  88   1                      ++rxcnt;
+  89   1                      if(rxcnt>=2)
+  90   1                      {                       
+  91   2                              temp=SBUF;                      //读出接收到的数据
+  92   2                              display[xx][yy]=temp;    //按顺序存入显示数组中
+  93   2                              xx++;
+  94   2                              if(xx==8)                               
+  95   2                              {
+  96   3                                      xx=0;
+  97   3                                      yy++;
+  98   3                                      if(yy==8)
+  99   3                                      yy=0;
+ 100   3                              }
+ 101   2                      }
+ 102   1                      if(rxcnt>=65)
+ 103   1                      rxcnt=0;        
+ 104   1      }
+ 105          void timer0_isr(void) interrupt 1
+ 106          {
+ 107   1              TH0=0xC0;
+ 108   1              TL0=0;
+ 109   1              if(icnt<21)
+ 110   1                      icnt++;
+ 111   1              else
+ 112   1              {
+ 113   2                      icnt=0;
+ 114   2                      if(layer<=7)
+ 115   2                      layer++;
+ 116   2                      else
+C51 COMPILER V9.00   CUBE8                                                                 11/10/2013 09:31:01 PAGE 3   
+
+ 117   2                      layer=0;
+ 118   2              }
+ 119   1      }
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  1 ERROR(S)
